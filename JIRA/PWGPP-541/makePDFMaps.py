@@ -55,7 +55,7 @@ def makePdfMaps(histo, slices, dimI):
         localNumbers.append(b[npSlice[i]])
         localCenter.append(c[npSlice[i]])
 
-    localCenter.pop(dimI)
+    centerI=localCenter.pop(dimI)
     localNumbers.pop(dimI)
 
     mesharrayNumbers = np.array(np.meshgrid(*localNumbers, indexing='ij'))
@@ -67,7 +67,22 @@ def makePdfMaps(histo, slices, dimI):
     binCenters = []
     for el in mesharrayCenter:
         binCenters.append(el.flatten())
+    
+    newHistogram = np.rollaxis(histogram,dimI,0)
+    
+    histoList=[]
+    for i in range(newHistogram.shape[0]):
+        histoList.append(newHistogram[i].flatten())
         
+    histoArray=np.array(histoList).transpose()
+    means=[]
+    rms=[]
+    medians=[]
+    for iHisto in histoArray:
+        means.append(np.average(centerI,weights=iHisto))
+        rms.append(np.sqrt(np.average(centerI**2,weights=iHisto)))
+        medians.append(np.median(np.repeat(centerI,iHisto.astype(int))))
+            
     histogramMap={}
     varNames=histo['varNames']
     varNames.pop(dimI)
@@ -76,11 +91,9 @@ def makePdfMaps(histo, slices, dimI):
         histogramMap[varNames[iDim] +"BinNumber"] = binNumbers[iDim]
         histogramMap[varNames[iDim] +"BinCenter"] = binCenters[iDim]
 
-    means = np.ndarray.flatten(np.mean(histogram,axis=dimI))
-    rms = np.ndarray.flatten(np.sqrt(np.mean(histogram**2,axis=dimI)))
-    medians = np.ndarray.flatten(np.median(histogram,axis=dimI))
-    entries = np.ndarray.flatten(np.sum(histogram,axis=dimI))
-
+        
+    entries = np.ndarray.flatten(np.sum(histogram,axis=0))
+    
     histogramMap["means"] = means
     histogramMap["rms"] = rms
     histogramMap["medians"] = medians
